@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="ASCII"?><project>
+	<version>1.0</version>
+	<configs>
+		<config category="opl" default="true" name="Configuraci&amp;#243;n 1">
+			<ref name="Proyecto AMMM.mod" type="model">
+			</ref>
+			<ref name="Proyecto AMMM.ops" type="setting">
+			</ref>
+			<ref name="Proyecto AMMM.dat" type="data">
+			</ref>
+		</config>
+	</configs>
+	
+</project>
