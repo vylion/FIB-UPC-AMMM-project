@@ -17,7 +17,6 @@
 	int passangers_num;
  }
  
- 
  tuple Bus
  {
  	int passangers_cap;
@@ -39,24 +38,33 @@
  Service services[S]=...;
  Bus buses[B]=...;
  Drivers drivers[D]=...;
- 
- 
- range M = 1..1440;//minutes a day.
+ int service_overlap[S][S]=...;
  
  dvar float+ cost;
  
  dvar boolean busServesService[B][S];
  dvar boolean DriverServesService[D][S];
+ dvar boolean driverMoreThanBM[D];
+ dvar int driverOvertime[D];
+ dvar int driverHours[D];
  
- minimize cost;
+ minimize  sum(b in B, s in S)	busServesService[b][s]*(services[s].kilometers*buses[b].price_km + services[s].duration_time*buses[b].price_min)
+ +sum (d in D) driverMoreThanBM[d]*driverOvertime[d]*drivers[d].CEM + sum(d in D)driverMoreThanBM[d]*drivers[d].BM*drivers[d].CBM 
+ + sum ( d in D) (driverMoreThanBM[d]==0)*drivers[d].CBM*driverHours[d];;
+
+ 			
  subject to
  {
  	//same 	bus cannot serve overlap in time
+ 	forall(b in B, s1,s2 in S)
+ 	  busServesService[b][s1] + busServesService[b][s2] + service_overlap[s1][s2] <= 2;
+ 	 //same driver cannot serve overlap in time
+ 	 forall(d in D, s1,s2 in S)
+ 	  DriverServesService[d][s1] + DriverServesService[d][s2] + service_overlap[s1][s2] <= 2;
  	
  	//respect max hours for drivers
  	forall(d in D)
- 	  sum(s in S)
- 	    (services[s].duration_time-services[s].starting_time)*DriverServesService[d][s] <= drivers[d].max_working_time;
+ 	  (sum(s in S) services[s].duration_time*DriverServesService[d][s]) <= drivers[d].max_working_time;
  
     //respect capacity bus
     forall(b in B)
@@ -66,12 +74,24 @@
     //use at most maxBuses
       (sum(b in B)
         sum(s in S)
-          busServesService[b][s]!=0)<=maxBuses;
+          busServesService[b][s])<=maxBuses;
           
-       
- 	//same driver cannot serve overlap in time
- 	
  	//respect working minutes for each driver
- 
+ 	forall(d in D)
+ 	  (sum(s in S) DriverServesService[d][s]*services[s].duration_time) <= drivers[d].max_working_time;
+ 	 
+ 	 //hours that a driver works
+ 	 forall(d in D)
+ 	     driverHours[d] >= sum(s in S) DriverServesService[d][s]*services[s].duration_time;
+ 	 
+ 	 //if a driver works overtime
+  	 forall(d in D)
+ 	     driverMoreThanBM[d] == drivers[d].BM <= sum(s in S) DriverServesService[d][s]*services[s].duration_time ;
+ 	 
+ 	 //get time overtime
+	 forall(d in D)
+	     driverOvertime[d] >= driverMoreThanBM[d]*(driverHours[d]-drivers[d].BM);
+   
+
+ 	
  }
- 
