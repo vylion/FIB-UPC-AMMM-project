@@ -17,6 +17,14 @@
 	int passangers_num;
  }
  
+ tuple Drivers
+ {
+ 	int max_working_time;
+ 	int BM;
+ 	float CBM;
+ 	float CEM; 
+ }
+ 
  tuple Bus
  {
  	int passangers_cap;
@@ -24,74 +32,68 @@
  	int price_km;
  }
  
- tuple Drivers
- {
- 	int max_working_time;
- 	int BM;
- 	int CBM;
- 	int CEM; 
- }
  range B = 1..numBuses;
  range D = 1..numDrivers;
  range S = 1..numServices;
  
  Service services[S]=...;
- Bus buses[B]=...;
  Drivers drivers[D]=...;
- int service_overlap[S][S]=...;
- 
- dvar float+ cost;
+ Bus buses[B]=...;
  
  dvar boolean busServesService[B][S];
- dvar boolean DriverServesService[D][S];
- dvar boolean driverMoreThanBM[D];
- dvar int driverOvertime[D];
- dvar int driverHours[D];
+ dvar boolean driverServesService[D][S];
+ dvar int+ driverOvertime[D];
+ dvar int+ driverHours[D];
+ dvar float+ costBuses;
+ dvar float+ costDrivers;
  
- minimize  sum(b in B, s in S)	busServesService[b][s]*(services[s].kilometers*buses[b].price_km + services[s].duration_time*buses[b].price_min)
- +sum (d in D) driverMoreThanBM[d]*driverOvertime[d]*drivers[d].CEM + sum(d in D)driverMoreThanBM[d]*drivers[d].BM*drivers[d].CBM 
- + sum ( d in D) (driverMoreThanBM[d]==0)*drivers[d].CBM*driverHours[d];;
+ minimize (costBuses + costDrivers);
 
- 			
  subject to
  {
- 	//same 	bus cannot serve overlap in time
- 	forall(b in B, s1,s2 in S)
- 	  busServesService[b][s1] + busServesService[b][s2] + service_overlap[s1][s2] <= 2;
- 	 //same driver cannot serve overlap in time
- 	 forall(d in D, s1,s2 in S)
- 	  DriverServesService[d][s1] + DriverServesService[d][s2] + service_overlap[s1][s2] <= 2;
+ 	// every service must be served by one bus
+ 	forall(s in S)
+ 	  sum(b in B)
+ 	    busServesService[b][s] == 1;
+ 	   
+ 	// every service must be served by one driver
+ 	forall(s in S)
+ 	  sum(d in D)
+ 	    driverServesService[d][s] == 1;
  	
- 	//respect max hours for drivers
+ 	// same bus cannot serve overlap in time
+	forall(b in B, s1, s2 in S : s2 > s1)
+	  (busServesService[b][s1] + busServesService[b][s2] == 2) =>
+	  	(services[s1].starting_time + services[s1].duration_time <= services[s2].starting_time)
+	  	+ (services[s2].starting_time + services[s2].duration_time <= services[s1].starting_time) == 1;
+ 	
+ 	// respect max hours for drivers
  	forall(d in D)
- 	  (sum(s in S) services[s].duration_time*DriverServesService[d][s]) <= drivers[d].max_working_time;
+ 	  (sum(s in S) services[s].duration_time*driverServesService[d][s]) <= drivers[d].max_working_time;
  
-    //respect capacity bus
-    forall(b in B)
-      forall(s in S)
-        busServesService[b][s]*buses[b].passangers_cap>=services[s].passangers_num;
-        
-    //use at most maxBuses
-      (sum(b in B)
-        sum(s in S)
-          busServesService[b][s])<=maxBuses;
-          
- 	//respect working minutes for each driver
- 	forall(d in D)
- 	  (sum(s in S) DriverServesService[d][s]*services[s].duration_time) <= drivers[d].max_working_time;
+    // respect capacity bus
+    forall(b in B, s in S)
+        buses[b].passangers_cap >= services[s].passangers_num*busServesService[b][s];
+    
+    // use at most maxBuses
+    sum(b in B)
+      sum(s in S)
+        busServesService[b][s] <= maxBuses;
  	 
- 	 //hours that a driver works
+ 	 // total hours that a driver works
  	 forall(d in D)
- 	     driverHours[d] >= sum(s in S) DriverServesService[d][s]*services[s].duration_time;
+	   driverHours[d] + driverOvertime[d] >= sum(s in S) driverServesService[d][s]*services[s].duration_time;
  	 
- 	 //if a driver works overtime
+ 	 // driver non-overtime hours can't exceed BM
   	 forall(d in D)
- 	     driverMoreThanBM[d] == drivers[d].BM <= sum(s in S) DriverServesService[d][s]*services[s].duration_time ;
- 	 
- 	 //get time overtime
-	 forall(d in D)
-	     driverOvertime[d] >= driverMoreThanBM[d]*(driverHours[d]-drivers[d].BM);
+  	   driverHours[d] <= drivers[d].BM;
    
-
+ 	// cost of all buses
+ 	costBuses >= sum(b in B)
+ 	  sum(s in S)
+ 	    busServesService[b][s]*(services[s].kilometers*buses[b].price_km + services[s].duration_time*buses[b].price_min);
  	
+ 	// cost of all drivers
+ 	costDrivers >= sum(d in D)
+ 	  (driverOvertime[d]*drivers[d].CEM + driverHours[d]*drivers[d].CBM);
  }
