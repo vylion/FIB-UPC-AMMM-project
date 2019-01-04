@@ -42,7 +42,7 @@ class Solver_GRASP(Solver):
         for service in services:
             (candidateList,
              serviceElapsedTime,
-             serviceNumCandidates) = solution.findFeasibleAssignments(service)
+             serviceNumCandidates) = solution.findFeasibleAssignments(service.id)
 
             elapsedTime += serviceElapsedTime
             evaluatedCandidates += serviceNumCandidates

@@ -20,7 +20,7 @@ class Solver_Greedy(Solver):
         for service in services:
             (feasibleAssignments,
              serviceElapsedTime,
-             serviceNumCandidates) = solution.findFeasibleAssignments(service)
+             serviceNumCandidates) = solution.findFeasibleAssignments(service.id)
 
             elapsedTime += serviceElapsedTime
             evaluatedCandidates += serviceNumCandidates

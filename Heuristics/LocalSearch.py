@@ -31,8 +31,8 @@ class LocalSearch(object):
         for change in changes:
             s, nb, nd = (change.service,
                          change.newBus, change.newDriver)
-            solution.unassign(s)
-            feasible = solution.assign(nb, nd, s)
+            newSolution.unassign(s)
+            feasible = newSolution.assign(nb, nd, s)
             if not feasible:
                 return None
 
@@ -48,10 +48,8 @@ class LocalSearch(object):
         for sid, service in services.items():
             if not service.assigned:
                 continue
-            bus = buses[service.bus]
-            driver = drivers[service.driver]
 
-            assignment = (service, bus, driver,
+            assignment = (service.id, service.bus, service.driver,
                           service.getCost(buses, drivers))
             assignments.append(assignment)
 
@@ -74,8 +72,8 @@ class LocalSearch(object):
 
                 for bid, newBus in solution.buses.items():
                     for did, newDriver in solution.buses.items():
-                        changes.append(Change(service,
-                                              newBus, newDriver))
+                        changes.append(Change(service.id,
+                                              bid, did))
 
                         neighbor = self.createNeighborSolution(solution,
                                                                changes)

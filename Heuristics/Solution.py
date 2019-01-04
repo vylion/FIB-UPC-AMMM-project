@@ -32,7 +32,10 @@ class Solution(Problem):
         self.cost = float('infinity')
 
     # This method both checks feasability and assigns if feasible
-    def assign(self, bus, driver, service):
+    def assign(self, bid, did, sid):
+        bus = self.buses[bid]
+        driver = self.drivers[did]
+        service = self.services[sid]
         # Do not attempt if we know this solution is already feasible
         if not self.feasible:
             self.log("Unable to do assignment. "
@@ -46,7 +49,8 @@ class Solution(Problem):
             return False
         return True
 
-    def unassign(self, service):
+    def unassign(self, sid):
+        service = self.services[sid]
         feasible = service.unassign(self.buses, self.drivers)
         if not feasible:
             self.log("Service is already unassigned.")
@@ -78,38 +82,38 @@ class Solution(Problem):
         self.cost = cost
         return cost
 
-    def findFeasibleAssignments(self, service):
+    def findFeasibleAssignments(self, sid):
         startEvalTime = time.time()
         evaluatedCandidates = 0
 
         feasibleAssignments = []
         for bid, bus in self.buses.items():
             for did, driver in self.drivers.items():
-                feasible = self.assign(bus, driver, service)
+                feasible = self.assign(bid, did, sid)
 
                 evaluatedCandidates += 1
                 if not feasible:
                     continue
 
-                assignment = (service, bus, driver, self.updateCost())
+                assignment = (sid, bid, did, self.updateCost())
                 feasibleAssignments.append(assignment)
 
-                self.unassign(service)
+                self.unassign(sid)
         elapsedTime = time.time() - startEvalTime
         return (feasibleAssignments, elapsedTime, evaluatedCandidates)
 
-    def findBestFeasibleAssignment(self, service):
-        best = (service, None, None, float('infinity'))
+    def findBestFeasibleAssignment(self, sid):
+        best = (sid, None, None, float('infinity'))
 
         for bid, bus in self.buses.items():
             for did, driver in self.drivers.items():
-                feasible = self.assign(bus, driver, service)
+                feasible = self.assign(bid, did, sid)
                 if not feasible:
                     continue
                 cost = self.updateCost()
                 if cost < best[-1]:
-                    best = (service, bus, driver, cost)
-                self.unassign(service)
+                    best = (sid, bid, did, cost)
+                self.unassign(sid)
         return best
 
     def log(self, s):
@@ -139,7 +143,8 @@ class Solution(Problem):
             s += "\t[ "
             for bs in b:
                 s += str(bs) + " "
-            s += "]\n\n"
+            s += "]\n"
+        s += "\n"
 
         # DriverServesService
 
@@ -157,7 +162,8 @@ class Solution(Problem):
             s += "\t[ "
             for ds in d:
                 s += str(ds) + " "
-            s += "]\n\n"
+            s += "]\n"
+        s += "\n"
 
         # DriverHours (non-overtime hours)
 
@@ -168,7 +174,7 @@ class Solution(Problem):
         s += "driverHours [ "
         for d in driverHours:
             s += str(d) + " "
-        s += "]\n\n"
+        s += "]\n"
 
         # driverOvertime (overtime hours)
 
@@ -180,6 +186,8 @@ class Solution(Problem):
         for d in driverOvertime:
             s += str(d) + " "
         s += "]\n\n"
+
+        s += "All services are served? " + ("YES" if self.checkInstance() else "NO")
 
         return s
 
