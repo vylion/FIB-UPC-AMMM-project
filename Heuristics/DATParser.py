@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, re
 
-# Container of attributes. Attributes are dynamically created. 
+# Container of attributes. Attributes are dynamically created.
 class DATAttributes(object):
     pass
 
@@ -28,25 +28,32 @@ class DATAttributes(object):
 class DATParser(object):
     @staticmethod
     def _tryParse(x):
+        if isinstance(x, tuple):
+            if len(x[1]) < 1:
+                return DATParser._tryParse(x[0].strip(', '))
+            else:
+                return DATParser._tryParse(x[1].strip(', '))
+
+        # print('Parsing', x)
         # try parsing x as integer
         try:
             return(int(x))
-        except ValueError:
+        except Exception:
             pass
-        
+
         # try parsing x as float
         try:
             return(float(x))
-        except ValueError:
+        except Exception:
             pass
 
         # try parsing x as bool
         if(x in ['True',  'true',  'TRUE', 'T', 't']): return(True)
         if(x in ['False', 'false', 'FALSE', 'F', 'f']): return(False)
-        
+
         # x cannot be parsed, leave it as is
         return(x)
-    
+
     @staticmethod
     def _openFile(filePath):
         if(not os.path.exists(filePath)):
@@ -58,11 +65,21 @@ class DATParser(object):
         fileHandler = DATParser._openFile(filePath)
         fileContent = fileHandler.read()
         fileHandler.close()
-        
+
         datAttr = DATAttributes()
-        
+
         # lines not starting with <spaces>[a-zA-Z] are ignored.
         # comments can be added using for instance '$','//','#', ...
+
+        start = r'^[\s]*'
+        name = r'([a-zA-Z][\w]*)'
+        space = r'[\s]*'
+        end = space + r'\;'
+        atom = r'[\w\/\.\-]+,?'
+        oplTuple = r'<(' + atom + r')+>,?'
+        element = r'(' + atom + r')|(' + oplTuple + ')'
+        vector = (r'\[' + space + r'((' + atom + space + r')+'
+                  + r'|(' + oplTuple + space + r')+' + r')\]')
 
         # parse scalar attributes
         pattern = re.compile(r'^[\s]*([a-zA-Z][\w]*)[\s]*\=[\s]*([\w\/\.\-]+)[\s]*\;', re.M)
@@ -71,22 +88,25 @@ class DATParser(object):
             datAttr.__dict__[entry[0]] = DATParser._tryParse(entry[1])
 
         # parse 1-dimension vector attributes
-        pattern = re.compile(r'^[\s]*([a-zA-Z][\w]*)[\s]*\=[\s]*\[[\s]*(([\w\/\.\-]+[\s]*)+)\][\s]*\;', re.M)
+        pattern = re.compile(start + name + space + r'\='
+                             + space + vector + end, re.M)
         entries = pattern.findall(fileContent)
         for entry in entries:
-            pattern2 = re.compile(r'([\w\/\.]+)[\s]*')
+            pattern2 = re.compile(space + element + space)
             values = pattern2.findall(entry[1])
             datAttr.__dict__[entry[0]] = map(DATParser._tryParse, values)
 
         # parse 2-dimension vector attributes
-        pattern = re.compile(r'^[\s]*([a-zA-Z][\w]*)[\s]*\=[\s]*\[(([\s]*\[[\s]*(([\w\/\.\-]+[\s]*)+)\][\s]*)+)[\s]*\][\s]*\;', re.M)
+        pattern = re.compile(start + name + space + r'\=' + space + r'\['
+                             + r'((' + space + vector + space + r')+)' + space
+                             + r'\]' + end, re.M)
         entries = pattern.findall(fileContent)
         for entry in entries:
-            pattern2 = re.compile(r'[\s]*\[[\s]*(([\w\/\.\-]+[\s]*)+)\][\s]*')
+            pattern2 = re.compile(space + vector + space)
             entries2 = pattern2.findall(entry[1])
             values = []
             for entry2 in entries2:
-                pattern2 = re.compile(r'([\w\/\.\-]+)[\s]*')
+                pattern2 = re.compile(element)
                 values2 = pattern2.findall(entry2[0])
                 values.append(map(DATParser._tryParse, values2))
             datAttr.__dict__[entry[0]] = values

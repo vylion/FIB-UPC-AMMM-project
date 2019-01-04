@@ -16,7 +16,7 @@ class Problem(object):
         for busId in range(0, nBuses):
             # Assuming that each element of inputData.buses is a string,
             # remove initial and trailing "<...>", then split on ","
-            busData = inputData.buses[busId][1:-1].split(',')
+            busData = inputData.buses[busId].strip('<>').split(',')
             # Convert to numeral values
             for i in range(0, len(busData)):
                 busData[i] = int(busData[i].strip())
@@ -28,10 +28,13 @@ class Problem(object):
         for driverId in range(0, nDrivers):
             # Assuming that each element of inputData.drivers is a string,
             # remove initial and trailing "<...>", then split on ","
-            driverData = inputData.drivers[driverId][-1:1].split(',')
+            driverData = inputData.drivers[driverId].strip('<>').split(',')
             # Convert to numeral values
             for i in range(0, len(driverData)):
-                driverData[i] = int(driverData[i].strip())
+                try:
+                    driverData[i] = int(driverData[i].strip())
+                except ValueError:
+                    driverData[i] = float(driverData[i].strip())
             # Create element
             driver = Driver(driverId, driverData[0], driverData[1],
                             driverData[2], driverData[3])
@@ -41,7 +44,10 @@ class Problem(object):
         for serviceId in range(0, nServices):
             # Assuming that each element of inputData.services is a string,
             # remove initial and trailing "<...>", then split on ","
-            serviceData = inputData.drivers[serviceId][-1:1].split(',')
+            serviceData = inputData.services[serviceId].strip('<>').split(',')
+            # Convert to numeral values
+            for i in range(0, len(serviceData)):
+                serviceData[i] = int(serviceData[i].strip())
             service = Service(serviceId, serviceData[0], serviceData[1],
                               serviceData[2], serviceData[3], self.services)
             self.services[service.id] = service
@@ -53,12 +59,21 @@ class Problem(object):
             count += 1 if len(bus.serving) > 0 else 0
         return count
 
+    def getBuses(self):
+        return list(self.buses.values())
+
+    def getDrivers(self):
+        return list(self.drivers.values())
+
+    def getServices(self):
+        return list(self.services.values())
+
     def checkInstance(self):
         # Number of serving buses should be less or equal than the maximum
         if self.countBuses() > self.maxBuses:
             return False
         # All services should be assigned to a bus and a driver
-        for sid, service in Service.All.items():
+        for sid, service in self.services.items():
             if not service.assigned:
                 return False
         # No bus should serve overlapping services

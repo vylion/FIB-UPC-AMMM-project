@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 
 class Driver(object):
     def __init__(self, driverId, maxTime, BM, CBM, CEM):
@@ -33,7 +35,7 @@ class Driver(object):
         # Service has been removed
         return True
 
-    def cost(self):
+    def getCost(self):
         cost = (min(self.workingHours, self.BM) * self.CBM
                 + max(self.workingHours - self.BM, 0) * self.CEM)
         return cost

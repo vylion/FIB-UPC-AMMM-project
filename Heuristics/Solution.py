@@ -1,4 +1,6 @@
-import copy
+#!/usr/bin/env python3
+
+
 import time
 from Problem import Problem
 
@@ -15,6 +17,15 @@ class Solution(Problem):
 
         self.feasible = True
         self.cost = 0
+
+    def setVerbose(self, verbose):
+        self.verbose = verbose
+
+    def isFeasible(self):
+        self.checkInstance()
+        if not self.feasible:
+            self.cost = float('infinity')
+        return self.feasible
 
     def makeInfeasible(self):
         self.feasible = False
@@ -61,23 +72,62 @@ class Solution(Problem):
     def updateCost(self):
         cost = 0
         for _, bus in self.buses.items():
-            cost += bus.cost()
+            cost += bus.getCost()
         for _, driver in self.drivers.items():
-            cost += driver.cost()
+            cost += driver.getCost()
         self.cost = cost
+        return cost
+
+    def findFeasibleAssignments(self, service):
+        startEvalTime = time.time()
+        evaluatedCandidates = 0
+
+        feasibleAssignments = []
+        for bid, bus in self.buses.items():
+            for did, driver in self.drivers.items():
+                feasible = self.assign(bus, driver, service)
+
+                evaluatedCandidates += 1
+                if not feasible:
+                    continue
+
+                assignment = (service, bus, driver, self.updateCost())
+                feasibleAssignments.append(assignment)
+
+                self.unassign(service)
+        elapsedTime = time.time() - startEvalTime
+        return (feasibleAssignments, elapsedTime, evaluatedCandidates)
+
+    def findBestFeasibleAssignment(self, service):
+        best = (service, None, None, float('infinity'))
+
+        for bid, bus in self.buses.items():
+            for did, driver in self.drivers.items():
+                feasible = self.assign(bus, driver, service)
+                if not feasible:
+                    continue
+                cost = self.updateCost()
+                if cost < best[-1]:
+                    best = (service, bus, driver, cost)
+                self.unassign(service)
+        return best
 
     def log(self, s):
         if self.verbose:
             print(s)
 
     def __str__(self):
-        s = "z = {};\n\n".format(self.cost)
+        s = "z = {};\n\n".format(self.updateCost())
+
+        nBuses = self.inputData.numBuses
+        nServices = self.inputData.numServices
+        nDrivers = self.inputData.numDrivers
 
         # busServesService
 
         busServesService = []
-        for b in range(0, self.inputData.nBuses):
-            bs = [0] * self.inputData.nServices
+        for b in range(0, nBuses):
+            bs = [0] * nServices
             busServesService.append(bs)
 
         for bid, bus in self.buses.items():
@@ -94,8 +144,8 @@ class Solution(Problem):
         # DriverServesService
 
         driverServesService = []
-        for d in range(0, self.inputData.nDrivers):
-            ds = [0] * self.inputData.nServices
+        for d in range(0, nDrivers):
+            ds = [0] * nServices
             driverServesService.append(ds)
 
         for did, driver in self.buses.items():
@@ -111,7 +161,7 @@ class Solution(Problem):
 
         # DriverHours (non-overtime hours)
 
-        driverHours = [0] * self.inputData.nDrivers
+        driverHours = [0] * nDrivers
         for did, driver in self.drivers.items():
             driverHours[did] = driver.getBMHours()
 
@@ -122,7 +172,7 @@ class Solution(Problem):
 
         # driverOvertime (overtime hours)
 
-        driverOvertime = [0] * self.inputData.nDrivers
+        driverOvertime = [0] * nDrivers
         for did, driver in self.drivers.items():
             driverOvertime[did] = driver.getOvertime()
 

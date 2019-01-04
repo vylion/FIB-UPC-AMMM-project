@@ -3,6 +3,7 @@ inputDataFile        = data/big_0.dat;        # Input DAT file
 solutionFile         = solutions/example.sol; # Output DAT file (solution)
 solver               = Greedy;                 # Supported solvers: Greedy / GRASP
 maxExecTime          = 120;                   # Maximum execution time in seconds
+verbose              = True;
 
 # --- Greedy specific parameters ------------------------------------------------------------------------------
 # Does not has specific parameters

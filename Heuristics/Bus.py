@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 
 class Bus(object):
     def __init__(self, busId, capacity, priceMinute, priceKm):
@@ -34,5 +36,5 @@ class Bus(object):
         # Service has been removed
         return True
 
-    def cost(self):
+    def getCost(self):
         return self.cost

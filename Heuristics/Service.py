@@ -1,5 +1,4 @@
-from Bus import Bus
-from Driver import Driver
+#!/usr/bin/env python3
 
 
 class Service(object):
@@ -13,15 +12,13 @@ class Service(object):
         self.overlaps = set()
         # Check if new service overlaps with any existing ones
         for sid, service in services.items():
-            if self.overlaps(service):
+            if self.overlapping(service):
                 service.overlaps.add(self.id)
                 self.overlaps.add(sid)
-        # Add new service to the list of all services
-        Service.All[self.id] = self
         # Current assignment status
         self.assigned = False
 
-    def overlaps(self, s2):
+    def overlapping(self, s2):
         one = s2.start >= self.start and s2.start < self.end
         two = self.start >= s2.start and self.start < s2.end
         return one or two
@@ -93,3 +90,11 @@ class Service(object):
         # Remove assignment from old bus
         drivers[did].remove(self)
         return True
+
+    def getCost(self, buses, drivers):
+        bus = buses[self.bus]
+        driver = drivers[self.driver]
+        return (bus.getCost() + driver.getCost())
+
+    def resources(self):
+        return self.duration * self.km * (self.numPassengers / 100)
