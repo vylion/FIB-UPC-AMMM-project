@@ -19,7 +19,10 @@ class Problem(object):
             busData = inputData.buses[busId].strip('<>').split(',')
             # Convert to numeral values
             for i in range(0, len(busData)):
-                busData[i] = int(busData[i].strip())
+                try:
+                    busData[i] = int(busData[i].strip())
+                except ValueError:
+                    busData[i] = float(busData[i].strip())
             # Create element
             bus = Bus(busId, busData[0], busData[1], busData[2])
             self.buses[bus.id] = bus

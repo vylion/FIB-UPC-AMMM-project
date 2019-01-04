@@ -148,7 +148,7 @@ class Solution(Problem):
             ds = [0] * nServices
             driverServesService.append(ds)
 
-        for did, driver in self.buses.items():
+        for did, driver in self.drivers.items():
             for sid, service in driver.serving.items():
                 driverServesService[did][sid] = 1
 
