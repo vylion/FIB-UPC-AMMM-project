@@ -68,11 +68,11 @@ class LocalSearch(object):
             assignments = self.getSortedAssignmentsByCost(solution)
 
             for assignment in assignments:
-                service, oldBus, oldDriver, _ = assignment
+                sid, oldBid, oldDid, _ = assignment
 
                 for bid, newBus in solution.buses.items():
                     for did, newDriver in solution.buses.items():
-                        changes.append(Change(service.id,
+                        changes.append(Change(sid,
                                               bid, did))
 
                         neighbor = self.createNeighborSolution(solution,
