@@ -28,13 +28,14 @@
  tuple Bus
  {
  	int passangers_cap;
- 	int price_min;
- 	int price_km;
+ 	float price_min;
+ 	float price_km;
  }
  
  range B = 1..numBuses;
  range D = 1..numDrivers;
  range S = 1..numServices;
+ int service_overlap[S][S]=...;
  
  Service services[S]=...;
  Drivers drivers[D]=...;
@@ -60,12 +61,14 @@
  	forall(s in S)
  	  sum(d in D)
  	    driverServesService[d][s] == 1;
- 	
- 	// same bus cannot serve overlap in time
-	forall(b in B, s1, s2 in S : s2 > s1)
-	  (busServesService[b][s1] + busServesService[b][s2] == 2) =>
-	  	(services[s1].starting_time + services[s1].duration_time <= services[s2].starting_time)
-	  	+ (services[s2].starting_time + services[s2].duration_time <= services[s1].starting_time) == 1;
+
+ 	//same   bus cannot serve overlap in time
+   forall(b in B, s1,s2 in S: s1!=s2)
+     busServesService[b][s1] + busServesService[b][s2] + service_overlap[s1][s2] <= 2;
+     
+    //same driver cannot serve overlap in time
+   forall(d in D, s1,s2 in S: s1!=s2)
+     driverServesService[d][s1] + driverServesService[d][s2] + service_overlap[s1][s2] <= 2;
  	
  	// respect max hours for drivers
  	forall(d in D)
@@ -77,8 +80,8 @@
     
     // use at most maxBuses
     sum(b in B)
-      sum(s in S)
-        busServesService[b][s] <= maxBuses;
+      (sum(s in S)
+        busServesService[b][s] >= 1) <= maxBuses;
  	 
  	 // total hours that a driver works
  	 forall(d in D)

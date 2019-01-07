@@ -138,6 +138,8 @@ class LocalSearch(object):
         self.iterations += iterations
         self.elapsedTime += time.time() - startEvalTime
 
+        # print('z = ' + str(bestCost))
+
         return bestSolution
 
     def printPerformance(self):

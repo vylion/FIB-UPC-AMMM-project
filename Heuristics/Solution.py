@@ -187,7 +187,7 @@ class Solution(Problem):
             s += str(d) + " "
         s += "]\n\n"
 
-        s += "All services are served? " + ("YES" if self.checkInstance() else "NO")
+        s += "Are all services served? " + ("YES" if self.checkInstance() else "NO")
 
         return s
 

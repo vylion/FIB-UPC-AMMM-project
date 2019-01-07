@@ -117,4 +117,4 @@ class Solver_GRASP(Solver):
 
         localSearch.printPerformance()
 
-        return solution
+        return bestSolution

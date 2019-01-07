@@ -13,6 +13,14 @@ from Problem import Problem
 # from Solution import Solution
 
 
+def getSolutionFile(config):
+    datFile = '.'.join(config.inputDataFile.split('.')[:-1])
+    datFile = datFile.split('/')[-1]
+    nameBits = [config.solutionFile + datFile, config.neighborhoodStrategy,
+                config.policy]
+    return '_'.join(nameBits) + '.sol'
+
+
 def run():
     try:
         argp = argparse.ArgumentParser(description='AMMM Final Project')
@@ -48,7 +56,9 @@ def run():
             solver = Solver_GRASP()
             solution = solver.solve(config, problem)
 
-        solution.saveToFile(config.solutionFile)
+        print('Solved: z = ' + str(solution.cost))
+        savefile = getSolutionFile(config)
+        solution.saveToFile(savefile)
 
         return 0
     except Exception as e:
